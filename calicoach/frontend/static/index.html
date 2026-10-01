@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CaliCoach</title>
+<!-- Optional: used only to draw A2UI Icon components. If it can't load (offline/
+     corp network), icons fall back to showing their name as text. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --accent: #e65100;
+    --accent-dark: #bf360c;
+    --accent-light: #fff3e0;
+    --accent-border: #ffcc80;
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --user-msg: linear-gradient(135deg, #e65100, #f57c00);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 0.7rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .brand-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  /* Timer / Cronómetro Widget */
+  .timer-widget {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .timer-display {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-dark);
+    min-width: 50px;
+    text-align: center;
+  }
+  .timer-controls {
+    display: flex;
+    gap: 0.3rem;
+  }
+  .timer-btn {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.25rem 0.55rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .timer-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent-border);
+  }
+  .timer-btn.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+  }
+  .timer-presets {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .preset-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.4rem;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .preset-btn:hover {
+    color: var(--accent);
+    background: rgba(230,81,0,0.08);
+  }
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 4px rgba(230,81,0,0.25);
+  }
+  .brand-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+  .brand-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1rem;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .msg-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    animation: fadeIn 0.25s ease-out;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg-wrapper.user {
+    flex-direction: row-reverse;
+  }
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .avatar.agent-avatar {
+    background: var(--accent-light);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+  .avatar.user-avatar {
+    background: #e2e8f0;
+    color: #475569;
+  }
+  .bubble-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+  }
+  .msg-wrapper.user .bubble-content {
+    align-items: flex-end;
+  }
+  .msg-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    padding: 0 0.35rem;
+    font-weight: 500;
+  }
+  .bubble {
+    display: inline-block;
+    padding: 0.85rem 1.1rem;
+    border-radius: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    text-align: left;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    line-height: 1.55;
+    font-size: 0.96rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .msg-wrapper.user .bubble {
+    background: var(--user-msg);
+    color: #ffffff;
+    border: none;
+    border-top-right-radius: 4px;
+    box-shadow: 0 2px 6px rgba(230,81,0,0.22);
+  }
+  .msg-wrapper.agent .bubble {
+    border-top-left-radius: 4px;
+  }
+  .bubble.rich {
+    background: transparent;
+    border: none;
+    padding: 0;
+    box-shadow: none;
+    max-width: 100%;
+    white-space: normal;
+  }
+  .input-panel {
+    background: #ffffff;
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1rem 1rem;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+  }
+  .prompt-row {
+    display: flex;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .prompt-btn {
+    background: var(--accent-light);
+    color: var(--accent-dark);
+    border: 1px solid var(--accent-border);
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  .prompt-btn:hover {
+    background: #ffe0b2;
+    transform: translateY(-1px);
+  }
+  form {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+  }
+  input {
+    flex: 1;
+    padding: 0.8rem 1.1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.98rem;
+    outline: none;
+    transition: border-color 0.15s;
+    background: #f8fafc;
+  }
+  input:focus {
+    border-color: var(--accent);
+    background: #ffffff;
+  }
+  button#send-btn {
+    padding: 0.8rem 1.3rem;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 4px rgba(230,81,0,0.25);
+  }
+  button#send-btn:hover {
+    background: var(--accent-dark);
+  }
+
+  /* --- A2UI component styles (Card, Column, Row, Text, Divider, List, Image, Icon) --- */
+  .a2card { border: 1px solid var(--border); border-radius: 16px; padding: 1.1rem; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.05); max-width: 100%; }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.75rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.5rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.45; }
+  .a2text.a2-h1 { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+  .a2text.a2-h2 { font-size: 1.2rem; font-weight: 700; color: #0f172a; }
+  .a2text.a2-h3 { font-size: 1.05rem; font-weight: 600; color: #1e293b; }
+  .a2text.a2-h4 { font-size: 0.95rem; font-weight: 600; color: #334155; }
+  .a2text.a2-caption { font-size: 0.82rem; color: #64748b; }
+  .a2divider { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 12px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.3rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand-container">
+    <div class="brand-logo">⚡</div>
+    <div>
+      <div class="brand-title">CaliCoach</div>
+      <div class="brand-subtitle">Entrenador Personal de Calistenia & Progresiones</div>
+    </div>
+  </div>
+  <div class="timer-widget">
+    <span class="timer-display" id="timer-display">00:00</span>
+    <div class="timer-controls">
+      <button type="button" class="timer-btn" id="timer-toggle-btn" onclick="toggleTimer()">Iniciar</button>
+      <button type="button" class="timer-btn" onclick="resetTimer()">Reset</button>
+    </div>
+    <div class="timer-presets">
+      <button type="button" class="preset-btn" title="Descanso corto" onclick="setTimerSeconds(60)">60s</button>
+      <button type="button" class="preset-btn" title="Descanso medio" onclick="setTimerSeconds(90)">90s</button>
+      <button type="button" class="preset-btn" title="Fuerza máx" onclick="setTimerSeconds(180)">3m</button>
+    </div>
+  </div>
+</header>
+<div id="log"></div>
+<div class="input-panel">
+  <div class="prompt-row">
+    <button type="button" class="prompt-btn" onclick="sendPrompt('¿Cuáles son las progresiones para dominar el Muscle-Up?')">Progresiones Muscle-Up</button>
+    <button type="button" class="prompt-btn" onclick="sendPrompt('Hago 12 dominadas y 15 fondos, ¿estoy listo para el Front Lever?')">Test de preparación física</button>
+    <button type="button" class="prompt-btn" onclick="sendPrompt('Genera una imagen con la postura correcta del Handstand')">Visual de técnica (Handstand)</button>
+  </div>
+  <form id="form">
+    <input id="input" placeholder="Pregunta sobre progresiones, rutinas, lesiones..." autocomplete="off" autofocus>
+    <button id="send-btn">Enviar</button>
+  </form>
+</div>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+
+function bubble(who) {
+  const wrapper = el("div", "msg-wrapper " + who);
+  const avatar = el("div", "avatar " + (who === "user" ? "user-avatar" : "agent-avatar"));
+  avatar.textContent = who === "user" ? "👤" : "⚡";
+  
+  const content = el("div", "bubble-content");
+  const meta = el("div", "msg-meta", who === "user" ? "Tú" : "CaliCoach");
+  const b = el("div", "bubble");
+  
+  content.appendChild(meta);
+  content.appendChild(b);
+  wrapper.appendChild(avatar);
+  wrapper.appendChild(content);
+  log.appendChild(wrapper);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * Renders Card / Column / Row / Text / Divider / List / Image / Icon.
+ * Anything else falls back to plain text (see renderReply). All text goes in via
+ * textContent and image URLs are validated, so agent output can't inject HTML.
+ * -------------------------------------------------------------------------- */
+
+// A "bound value" is usually {literalString: "..."}; we only support literals.
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+// child ids of a component's props: single `child` and/or `children.explicitList`.
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+// A2UI icon names are camelCase (locationOn); Material Symbols wants snake_case.
+function iconName(n) { return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase(); }
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;   // missing / cycle guard
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;   // only allow safe URLs
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Video": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const vid = el("video", "a2video");
+      vid.src = src;
+      vid.controls = true;
+      vid.autoplay = true;
+      vid.loop = true;
+      vid.muted = true;
+      vid.style.maxWidth = "100%";
+      vid.style.borderRadius = "12px";
+      return vid;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;   // unknown component -> skipped (text fallback covers content)
+  }
+}
+
+// Render one or more A2UI messages (beginRendering + surfaceUpdate) into `container`.
+// Returns true if anything was drawn.
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {   // no valid root given -> infer un-referenced components
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+// Fallback: pull every Text value out of the messages as plain text.
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";   // clear the "…" placeholder
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+function sendPrompt(promptText) {
+  input.value = promptText;
+  form.dispatchEvent(new Event("submit"));
+}
+
+// The proxy returns { parts: [{kind:"text",text} | {kind:"a2ui",data}] }.
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  bubble("user").textContent = text;
+  input.value = "";
+  const b = bubble("agent"); b.textContent = "…";
+  try {
+    const res = await fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) });
+    // Read as text first, then parse. If the proxy ever returns a non-JSON error
+    // page (e.g. a plain "Internal Server Error"), show that body instead of a
+    // cryptic "Unexpected token" JSON error.
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+});
+/* ----------------------------------------------------------------------------
+ * Workout Rest Timer / Cronómetro
+ * Supports both count-up stopwatch and countdown for set rests (60s, 90s, 3m).
+ * -------------------------------------------------------------------------- */
+let timerInterval = null;
+let timerSeconds = 0;
+let isCountdown = false;
+
+function updateTimerDisplay() {
+  const display = document.getElementById("timer-display");
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  display.textContent = `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+function toggleTimer() {
+  const btn = document.getElementById("timer-toggle-btn");
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    btn.textContent = "Reanudar";
+    btn.classList.remove("active");
+  } else {
+    btn.textContent = "Pausar";
+    btn.classList.add("active");
+    timerInterval = setInterval(() => {
+      if (isCountdown) {
+        if (timerSeconds > 0) {
+          timerSeconds--;
+          updateTimerDisplay();
+          if (timerSeconds === 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            btn.textContent = "¡Tiempo!";
+            btn.classList.remove("active");
+            if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          }
+        }
+      } else {
+        timerSeconds++;
+        updateTimerDisplay();
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  const btn = document.getElementById("timer-toggle-btn");
+  btn.textContent = "Iniciar";
+  btn.classList.remove("active");
+  timerSeconds = 0;
+  isCountdown = false;
+  updateTimerDisplay();
+}
+
+function setTimerSeconds(sec) {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  isCountdown = true;
+  timerSeconds = sec;
+  updateTimerDisplay();
+  const btn = document.getElementById("timer-toggle-btn");
+  btn.textContent = "Iniciar";
+  btn.classList.remove("active");
+  toggleTimer();
+}
+</script>
+</body>
+</html>
